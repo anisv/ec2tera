@@ -1,3 +1,6 @@
+module "ec2" {
+     source = "github.com/anisv/ec2tera/main/main.tf"
+}
 provider "aws" {
   access_key = "AKIAVQWASGOQQIL7JJFI"
   secret_key = "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"
