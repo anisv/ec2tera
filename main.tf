@@ -5,6 +5,10 @@ provider "aws" {
 }
 resource "aws_vpc" "myvpc" {
   cidr_block        = "10.0.0.0/16"
+  instance_tenancy     = "default"
+  enable_dns_support   = "true"
+  enable_dns_hostnames = "true"
+  enable_classiclink   = "false"
   tags = {
     Name = "myvpc"
   }
@@ -51,18 +55,39 @@ ingress {
 }
 resource "aws_subnet" "my_subnet" {
   vpc_id      = aws_vpc.myvpc.id
-  cidr_block       = "10.0.0.0/24"
+  cidr_block       = "10.0.1.0/24"
+  map_public_ip_on_launch = "true"
   availability_zone = "ap-south-1a"
 }
+resource "aws_internet_gateway" "test-gw" {
+  vpc_id = aws_vpc.myvpc.id
 
+  tags = {
+    Name = "test-gw"
+  }
+}
+resource "aws_route_table" "test-rt" {
+  vpc_id = aws_vpc.myvpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.test-gw.id
+  }
+
+  tags = {
+    Name = "test-rt"
+  }
+}
+resource "aws_route_table_association" "test-rtassocia" {
+  subnet_id      = aws_subnet.my_subnet.id
+  route_table_id = aws_route_table.test-rt.id
+}
 resource "aws_instance" "terraec2" {
   ami           = "ami-052cef05d01020f1d"
   instance_type = "t2.micro"
   key_name = "mykey"
   subnet_id = aws_subnet.my_subnet.id
   vpc_security_group_ids = [aws_security_group.ec2terra_sec.id]
-  associate_public_ip_address = true
-      tags = {
+       tags = {
     Name = "terraec2 mine"
   }
 } 
